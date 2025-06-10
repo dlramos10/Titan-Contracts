@@ -1,49 +1,62 @@
-
-from flask import Flask, render_template, request, redirect, url_for
-from contracts.scheduler import start_scheduler
-from contracts.db import fetch_all_contracts, save_contracts, init_db
-from contracts.federal_contracts import fetch_sam_gov_contracts, fetch_usa_spending
+import sqlite3
 import os
+from datetime import datetime
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+# Use Render-compatible writable directory
+DB_FILE = os.getenv("DB_FILE", "/tmp/contracts.db")
 
-@app.route("/")
-def home():
-    return render_template("home.html")
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS contracts (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        agency TEXT,
+        location TEXT,
+        due_date TEXT,
+        summary TEXT,
+        source TEXT,
+        link TEXT,
+        date_posted TEXT
+    )''')
+    conn.commit()
+    conn.close()
 
-@app.route("/search", methods=["GET"])
-def search():
-    contracts = fetch_all_contracts()
-    return render_template("results.html", contracts=contracts)
+def save_contracts(contracts):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    for contract in contracts:
+        c.execute("INSERT OR REPLACE INTO contracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            contract["id"],
+            contract["title"],
+            contract["agency"],
+            contract["location"],
+            contract["due_date"],
+            contract["summary"],
+            contract["source"],
+            contract["link"],
+            contract["date_posted"]
+        ))
+    conn.commit()
+    conn.close()
 
-@app.route("/contract/<string:contract_id>")
-def contract_detail(contract_id):
-    all_contracts = fetch_all_contracts()
-    contract = next((c for c in all_contracts if c["id"] == contract_id), None)
-    return render_template("contract_detail.html", contract=contract)
-
-@app.route("/dashboard")
-def dashboard():
-    contracts = fetch_all_contracts()
-    sources = {}
-    for c in contracts:
-        src = c["source"]
-        sources[src] = sources.get(src, 0) + 1
-    return render_template("dashboard.html", contracts=contracts, sources=sources)
-
-@app.route("/fetch_federal", methods=["POST"])
-def fetch_federal():
-    sam = fetch_sam_gov_contracts(keyword="construction", naics_codes=[
-        "236220", "237110", "238220", "221310", "332410"
-    ])
-    usa = fetch_usa_spending(keyword="construction", naics_codes=[
-        "236220", "237110", "238220", "221310", "332410"
-    ])
-    save_contracts(sam + usa)
-    return redirect(url_for("search"))
-
-if __name__ == "__main__":
-    os.makedirs("db", exist_ok=True)
-    init_db()
-    start_scheduler()
-    app.run(debug=True)
+def fetch_all_contracts():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT * FROM contracts ORDER BY date_posted DESC")
+    rows = c.fetchall()
+    conn.close()
+    contracts = []
+    for row in rows:
+        contracts.append({
+            "id": row[0],
+            "title": row[1],
+            "agency": row[2],
+            "location": row[3],
+            "due_date": row[4],
+            "summary": row[5],
+            "source": row[6],
+            "link": row[7],
+            "date_posted": row[8]
+        })
+    return contracts

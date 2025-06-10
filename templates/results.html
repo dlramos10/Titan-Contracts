@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Results</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h2>Available Government Contracts</h2>
+    {% for contract in contracts %}
+        <div class="card">
+            <h3><a href="{{ contract.url }}" target="_blank">{{ contract.title }}</a></h3>
+            <p><strong>Source:</strong> {{ contract.source }}</p>
+            <p><strong>Agency:</strong> {{ contract.agency }}</p>
+            <p><a href="/contract/{{ contract.id }}">View Details</a></p>
+        </div>
+    {% else %}
+        <p>No contracts found.</p>
+    {% endfor %}
+    <a href="/dashboard">View Dashboard</a>
+</body>
+</html>

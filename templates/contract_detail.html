@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Detail</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% if contract %}
+        <h2>{{ contract.title }}</h2>
+        <p><strong>Agency:</strong> {{ contract.agency }}</p>
+        <p><strong>Source:</strong> {{ contract.source }}</p>
+        <p><strong>Published:</strong> {{ contract.publishDate }}</p>
+        <p><strong>Deadline:</strong> {{ contract.deadline }}</p>
+        <p><strong>NAICS:</strong> {{ contract.naics }}</p>
+        <p><a href="{{ contract.url }}" target="_blank">Official Link</a></p>
+    {% else %}
+        <p>Contract not found.</p>
+    {% endif %}
+    <a href="/search">Back to Results</a>
+</body>
+</html>

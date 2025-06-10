@@ -1,0 +1,17 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h2>Dashboard</h2>
+    <ul>
+        {% for source, count in sources.items() %}
+            <li>{{ source }}: {{ count }} contracts</li>
+        {% endfor %}
+    </ul>
+    <a href="/search">Back to Results</a>
+</body>
+</html>
